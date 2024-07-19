@@ -1,16 +1,21 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-
-const AK = '';
-const SK = '';
 
 @Injectable()
 export class WenxinService {
+  private readonly AK: string;
+  private readonly SK: string;
   private readonly apiUrl =
-    'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/image2text/fuyu_8b';
+    'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/ernie-speed-128k';
+
+  constructor(private configService: ConfigService) {
+    this.AK = this.configService.get<string>('WENXIN_API_KEY');
+    this.SK = this.configService.get<string>('WENXIN_SECRET_KEY');
+  }
 
   async getAccessToken(): Promise<string> {
-    const url = `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${AK}&client_secret=${SK}`;
+    const url = `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${this.AK}&client_secret=${this.SK}`;
     try {
       const response = await axios.post(url);
       return response.data.access_token;

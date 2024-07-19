@@ -16,9 +16,13 @@ import { CsvModule } from './modules/csv/csv.module';
 import { OthersModule } from './modules/others/others.module';
 import { WechatpayModule } from './modules/wechatpay/wechatpay.module';
 import { WenxinModule } from './modules/wenxin/wenxin.module';
+// config
+import { ConfigModule } from '@nestjs/config';
+import { HtmlToWordModule } from './modules/html-to-word/html-to-word.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     DatabaseModule,
     UsersModule,
@@ -30,6 +34,7 @@ import { WenxinModule } from './modules/wenxin/wenxin.module';
     WechatpayModule,
     AuthModule,
     WenxinModule,
+    HtmlToWordModule,
   ],
   controllers: [AppController],
   providers: [AppService, ResInterceptor],
