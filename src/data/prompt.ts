@@ -190,7 +190,7 @@ const resumeHtmlPrompt = `
 
 # 基础示例 
 根据以上JSON格式的简历数据生成对应的HTML格式简历模板。每个模块的数据需要转换为相应的HTML结构，其中包括基本信息、教育经历、工作经历、项目经历等模块。每个模块的显示条件由isShow字段决定，数据在item.data中。
-生成的HTML结构示例如下：
+各个模块生成的HTML结构示例如下：
 1. 基本信息
   - 输入：
       {
@@ -281,7 +281,7 @@ const resumeHtmlPrompt = `
         </div>
       </div>
 
-以下是HTML模板的基础结构，生成的所有HTML代码需放在resume类的盒子内。
+以下是HTML模板的基础结构，生成的html内容需放在resume类的盒子内。
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -340,6 +340,172 @@ const resumeHtmlPrompt = `
   </head>
   <body>
     <div class="resume">
+    </div>
+  </body>
+</html>
+`;
+
+const prompt2 = `
+# 角色任务
+作为简历模板生成器，你的任务是根据用户的要求，生成符合中国各行业优秀简历阅读习惯的HTML简历模板。
+
+# 工具能力
+1. HTML编程：熟悉HTML语言，能编写符合要求的HTML代码。
+2. 样式设计：具备设计简历样式的能力，包括字体、颜色、布局等。
+3. 模板生成：根据用户要求，生成特定的简历模板。
+
+# 样式要求
+1. 通过绘制SVG图案实现背景设计，注意图案的透明度和颜色搭配，确保不影响简历内容展示。
+2. 通过伪元素或者其它CSS来对标题进行样式设计。
+3. 可以在简历各个区域添加一些小装饰或者图标，但不要过于花哨。
+
+# 输出格式
+1. 只提供完整的HTML代码，不要回复其他内容。
+
+# 基础模板
+以下是HTML模板的基础结构，在不修改html已有结构和内容的情况下，对简历模板根据要求进行设计。
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        --page-padding: 15mm;
+        --module-gap: 15px;
+        --text-font-size: 14px;
+        --title-font-size: calc(var(--text-font-size) + 2px);
+        --line-height: 1.33;
+        --text-color: #333;
+        --title-color: #000;
+        --base-info-font-size: 16px;
+        --name-font-size: 24px;
+        --avatar-size: 100px;
+        --avatar-border-radius: 50%;
+        --personal-info-item-gap: 10px;
+        --title-font-weight: bold;
+        --title-margin-bottom: 5px;
+        --title-padding-bottom: 5px;
+        --title-border-bottom: 1px solid #000;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        background-color: #fff;
+      }
+      .resume {
+        box-sizing: border-box;
+        width: 210mm;
+        height: 297mm;
+        padding: var(--page-padding);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: var(--module-gap);
+      }
+      .title {
+        font-size: var(--title-font-size);
+        color: var(--title-color);
+        font-weight: var(--title-font-weight);
+        margin-bottom: var(--title-margin-bottom);
+        padding-bottom: var(--title-padding-bottom);
+        border-bottom: var(--title-border-bottom);
+      }
+      .content {
+        font-size: var(--text-font-size);
+        color: var(--text-color);
+        line-height: var(--line-height);
+      }
+      .personal-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .info-list {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .info-item {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--personal-info-item-gap);
+        font-size: var(--base-info-font-size);
+        color: var(--text-color);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="resume">
+      <div class="personal-info">
+        <div class="info-list">
+          <div
+            style="
+              font-size: var(--name-font-size);
+              font-weight: var(--title-font-weight);
+              color: var(--title-color);
+            "
+          >
+            姓名: 144114
+          </div>
+          <div class="info-item">
+            <div>电话: 41414</div>
+            <div>邮箱: 141414</div>
+            <div>职位: 414114</div>
+            <div>期望城市: 14141</div>
+          </div>
+        </div>
+        <img
+          src="https://t10.baidu.com/it/u=2841979291,228342409&fm=30&app=106&f=JPEG?w=640&h=640&s=FD8C38720772663559FCD5CA0000C0B1"
+          style="
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            border-radius: var(--avatar-border-radius);
+          "
+        />
+      </div>
+      <div>
+        <div class="title">教育经历</div>
+        <div style="display: flex; justify-content: space-between">
+          <span>XXX大学</span>
+          <span>本科</span>
+          <span>计算机科学</span>
+          <span>2015 - 2019</span>
+        </div>
+      </div>
+      <div>
+        <div class="title">工作经历</div>
+        <div style="display: flex; justify-content: space-between">
+          <span>公司名称</span>
+          <span>职位</span>
+          <span>时间</span>
+          <span>地点</span>
+        </div>
+        <div class="content">
+          <p>描述工作内容与成就。</p>
+        </div>
+      </div>
+      <div>
+        <div class="title">项目经历</div>
+        <div style="display: flex; justify-content: space-between">
+          <span>项目名称</span>
+          <span>职位</span>
+          <span>时间</span>
+          <span>地点</span>
+        </div>
+        <div class="content">
+          <p>描述项目内容与成就。</p>
+        </div>
+      </div>
+      <div>
+        <div class="title">个人总结</div>
+        <div class="content">
+          <p>这是个人总结的内容。</p>
+        </div>
+      </div>
     </div>
   </body>
 </html>
