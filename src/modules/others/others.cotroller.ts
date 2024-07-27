@@ -7,7 +7,6 @@ import {
   Query,
   Post,
   Body,
-  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import * as path from 'path';
@@ -16,9 +15,8 @@ import * as CryptoJS from 'crypto-js';
 import * as puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
-import { JwtAuthGuard } from '../auth/jwtAuth.guard';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('others')
 export class OthersController {
   @Get('music')
@@ -282,14 +280,22 @@ export class OthersController {
         await page.setExtraHTTPHeaders({
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          Referer: 'https://www.zhipin.com',
           'Accept-Language': 'en-US,en;q=0.9',
           'Accept-Encoding': 'gzip, deflate, br',
         });
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
+        // 或者等待特定的元素加载完毕
+        await page.waitForSelector('body');
+
         // 获取整个页面的 HTML 内容
-        const content = await page.content();
+        let content = await page.content();
+
+        // 定义你要插入的 CSS 文件链接
+        const cssLink = `<link href="/css.css" rel="stylesheet">`;
+
+        // 在<head>标签内插入 CSS 文件链接
+        content = content.replace('</head>', `${cssLink}</head>`);
 
         // 返回 HTML 内容给客户端
         res.send(content);
@@ -356,6 +362,93 @@ export class OthersController {
         'URL parameter is required',
         HttpStatus.BAD_REQUEST,
       );
+    }
+  }
+
+  @Get('getResumeDoc')
+  async getResumeDoc(@Query('url') url: string, @Res() res: Response) {
+    // http://localhost:3366/others/getResumeDoc?url=https://zcmima.cn/%23/resume/edit?id=MDAwMDAwMDAwMIO5x9-ydLua%26tzUrl=tem0005%26language=cn%26platform=pluginxfyun%26from=xfspark%26uuid=184abab5-9bd2-42a4-bda4-dfb2084fd69a#/resume/edit?id=MDAwMDAwMDAwMIO5x9-ydLua&tzUrl=tem0005&language=cn&platform=pluginxfyun&from=xfspark&uuid=184abab5-9bd2-42a4-bda4-dfb2084fd69a
+    if (!url) {
+      throw new HttpException(
+        'URL parameter is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+
+      const page = await browser.newPage();
+      await page.setExtraHTTPHeaders({
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+      });
+
+      // 增加超时时间，确保页面加载完成
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+
+      // 等待特定元素加载完毕
+      await page.waitForSelector('#resume_content');
+
+      // 读取本地 CSS 文件
+      const cssPath = path.join(process.cwd(), 'storage', 'css.css');
+      if (!fs.existsSync(cssPath)) {
+        throw new HttpException('CSS file not found', HttpStatus.NOT_FOUND);
+      }
+      const cssContent = fs.readFileSync(cssPath, 'utf-8');
+      const cssStyle = `<style>${cssContent}</style>`;
+
+      // 获取指定元素的 HTML 内容
+      const resumeContent = await page.$eval(
+        '#resumeContainer',
+        (element) => element.outerHTML,
+      );
+
+      const resumeContentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Resume Content</title>
+          ${cssStyle}
+        </head>
+        <body>
+          ${resumeContent}
+        </body>
+        </html>
+      `;
+
+      // 设置页面内容为 HTML，并生成 PDF
+      await page.setContent(resumeContentHtml, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        timeout: 60000, // 设置生成 PDF 的超时时间
+      });
+
+      // 返回 PDF 文件
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="resume.pdf"',
+      });
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new HttpException(
+        'Failed to generate PDF',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 }
