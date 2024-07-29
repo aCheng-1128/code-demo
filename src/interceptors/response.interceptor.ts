@@ -9,18 +9,24 @@ import { map } from 'rxjs/operators';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Injectable()
-class resTransformInterceptor implements NestInterceptor {
+class ResTransformInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((data) => ({
-        statusCode: context.switchToHttp().getResponse().statusCode,
-        data,
-      })),
+      map((data) => {
+        const response = context.switchToHttp().getResponse();
+        const statusCode = response.statusCode;
+        return {
+          code: statusCode,
+          data: data?.data || data,
+          msg: data?.msg || '',
+          status: statusCode < 400 ? 'success' : 'error',
+        };
+      }),
     );
   }
 }
 
 export const ResInterceptor = {
   provide: APP_INTERCEPTOR,
-  useClass: resTransformInterceptor,
+  useClass: ResTransformInterceptor,
 };

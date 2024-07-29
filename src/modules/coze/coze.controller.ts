@@ -2,82 +2,138 @@ import {
   Controller,
   Post,
   Body,
-  Res,
   UseGuards,
   Delete,
   Param,
   Get,
   Request,
+  Query,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { CozeService } from './coze.service';
 import { JwtAuthGuard } from '../auth/jwtAuth.guard';
 
 @Controller('coze')
+@UseGuards(JwtAuthGuard)
 export class CozeController {
   constructor(private readonly cozeService: CozeService) {}
 
-  @UseGuards(JwtAuthGuard)
+  // 生成会话
   @Post('create')
-  async createConversation(@Request() req, @Res() res: Response) {
+  async createConversation(@Request() req) {
     const userId = req.user.userId;
-    const conversationId = await this.cozeService.genConversation(userId);
-    res.json({ conversationId });
+    const conversationIds = await this.cozeService.getConversationIds(userId);
+    if (conversationIds.length) {
+      return {
+        data: { conversationIds },
+        msg: '会话已获取成功',
+      };
+    } else {
+      const conversationId = await this.cozeService.genConversation(userId);
+      return {
+        data: { conversationIds: [conversationId] },
+        msg: '新会话创建成功',
+      };
+    }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete('delete/:conversationId')
-  async deleteConversation(
-    @Request() req,
-    @Param('conversationId') conversationId: string,
-    @Res() res: Response,
-  ) {
-    const userId = req.user.userId;
-    await this.cozeService.deleteConversation(userId, conversationId);
-    res.sendStatus(204);
+  // 查看会话信息
+  @Get('info/:conversationId')
+  async getConversationInfo(@Param('conversationId') conversationId: string) {
+    const conversationInfo = await this.cozeService.getConversationInfo(
+      conversationId,
+    );
+    return {
+      data: { conversationInfo },
+      msg: '会话信息获取成功',
+    };
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('sendMessage')
-  async sendMessage(
-    @Request() req,
+  // 删除会话
+  @Delete('delete')
+  async deleteConversation(@Request() req) {
+    const userId = req.user.userId;
+    await this.cozeService.deleteConversation(userId);
+    return { data: null, msg: '会话删除成功' };
+  }
+
+  // 创建消息
+  @Post('genMessage')
+  async genMessage(
+    @Body('conversationId') conversationId: string,
     @Body('message') message: string,
-    @Res() res: Response,
+  ) {
+    const messageId = await this.cozeService.genMessage(
+      conversationId,
+      message,
+    );
+    return { data: { messageId }, msg: '消息发送成功' };
+  }
+
+  // 查看消息列表
+  @Get('messageList')
+  async getMessageList(@Query('conversationId') conversationId: string) {
+    const messages = await this.cozeService.getMessageList(conversationId);
+    return { data: { messages }, msg: '消息列表获取成功' };
+  }
+
+  // 查看消息详情
+  @Get('message')
+  async getMessageDetail(
+    @Param('messageId') messageId: string,
+    @Param('conversationId') conversationId: string,
+  ) {
+    const message = await this.cozeService.getMessageDetail(
+      conversationId,
+      messageId,
+    );
+    return { data: { message }, msg: '消息详情获取成功' };
+  }
+
+  // 创建聊天
+  @Post('genChat')
+  async genChat(
+    @Request() req,
+    @Body('conversationId') conversationId: string,
   ) {
     const userId = req.user.userId;
-    const messageId = await this.cozeService.genMessage(userId, message);
-    res.json({ messageId });
+    const response = await this.cozeService.genChat(conversationId, userId);
+    return { data: response, msg: '聊天创建成功' };
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('createChat')
-  async createChat(@Request() req, @Res() res: Response) {
-    const userId = req.user.userId;
-    const chatId = await this.cozeService.genChat(userId);
-    res.json({ chatId });
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('status/:chatId')
+  // 查看聊天状态
+  @Get('status')
   async getChatStatus(
-    @Request() req,
-    @Param('chatId') chatId: string,
-    @Res() res: Response,
+    @Query('conversationId') conversationId,
+    @Query('chatId') chatId: string,
   ) {
-    const userId = req.user.userId;
-    const status = await this.cozeService.chatRetrieve(userId, chatId);
-    res.json({ status });
+    const status = await this.cozeService.chatRetrieve(conversationId, chatId);
+    return { data: { status }, msg: '聊天状态获取成功' };
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('messages/:chatId')
+  // 查看聊天消息
+  @Get('messages')
   async getChatMessages(
+    @Query('conversationId') conversationId: string,
+    @Query('chatId') chatId: string,
+  ) {
+    const messages = await this.cozeService.chatMessageList(
+      conversationId,
+      chatId,
+    );
+    console.log('messages', messages);
+    return { data: messages, msg: '聊天消息获取成功' };
+  }
+
+  // 发送聊天消息
+  @Post('sendMsg')
+  async sendChatMessage(
     @Request() req,
-    @Param('chatId') chatId: string,
-    @Res() res: Response,
+    @Body('conversationId') conversationId: string,
+    @Body('message') message: string,
   ) {
     const userId = req.user.userId;
-    const messages = await this.cozeService.chatMessageList(userId, chatId);
-    res.json({ messages });
+    const chat_id = await this.cozeService.genMessage(conversationId, message);
+    const response = await this.cozeService.genChat(conversationId, userId);
+    return { data: { ...response, chat_id }, msg: '聊天消息发送成功' };
   }
 }

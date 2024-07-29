@@ -6,7 +6,7 @@ export type User = {
   username: string;
   password: string;
   id: string;
-  conversationId?: string;
+  conversationIds?: string[]; // 改为数组类型
 };
 
 @Injectable()
@@ -45,28 +45,33 @@ export class UsersService {
     this.writeUsersToFile(users);
   }
 
-  async updateConversationId(
+  async updateConversationIds(
     userId: string,
     conversationId: string,
   ): Promise<void> {
     const users = this.readUsersFromFile();
     const user = users.find((user) => user.id === userId);
     if (user) {
-      user.conversationId = conversationId;
-      this.writeUsersToFile(users);
+      if (!user.conversationIds) {
+        user.conversationIds = [];
+      }
+      if (!user.conversationIds.includes(conversationId)) {
+        user.conversationIds.push(conversationId);
+        this.writeUsersToFile(users);
+      }
     }
   }
 
-  async getConversationId(userId: string): Promise<string | undefined> {
+  async getConversationIds(userId: string): Promise<string[] | undefined> {
     const user = await this.findById(userId);
-    return user?.conversationId;
+    return user?.conversationIds || [];
   }
 
-  async clearConversationId(userId: string): Promise<void> {
+  async clearConversationIds(userId: string): Promise<void> {
     const users = this.readUsersFromFile();
     const user = users.find((user) => user.id === userId);
     if (user) {
-      user.conversationId = undefined;
+      user.conversationIds = [];
       this.writeUsersToFile(users);
     }
   }

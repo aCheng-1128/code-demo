@@ -12,7 +12,7 @@ import { UsersModule } from '../users/users.module';
     PassportModule,
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '600s' }, // Token有效期
+      signOptions: { expiresIn: '60000s' }, // Token有效期
     }),
     UsersModule,
   ],

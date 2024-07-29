@@ -1,4 +1,3 @@
-// src/modules/coze/coze.service.ts
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { UsersService } from '../users/users.service';
@@ -23,12 +22,12 @@ export class CozeService {
 
   constructor(private readonly usersService: UsersService) {}
 
-  private async getUserData(userId: string) {
-    // 从数据库获取用户数据
-    return await this.usersService.findById(userId);
+  // 获取用户会话
+  async getConversationIds(userId: string) {
+    return this.usersService.getConversationIds(userId);
   }
 
-  // 生成会话
+  // 创建会话
   async genConversation(userId: string) {
     const response = await axios.post(
       'https://api.coze.cn/v1/conversation/create',
@@ -36,25 +35,28 @@ export class CozeService {
       { headers: this.headers },
     );
     const conversationId = response.data.data.id;
-    // 保存 conversationId 和 userId 的关系
-    await this.usersService.updateConversationId(userId, conversationId);
+    await this.usersService.updateConversationIds(userId, conversationId);
     return conversationId;
   }
 
-  // 删除会话
-  async deleteConversation(userId: string, conversationId: string) {
-    // 调用 Coze API 删除会话逻辑（假设 API 支持此操作）
-    await axios.delete(
-      `https://api.coze.cn/v1/conversation/${conversationId}`,
+  // 查看会话信息
+  async getConversationInfo(conversationId: string) {
+    console.log('getConversationInfo', conversationId);
+    const response = await axios.get(
+      `https://api.coze.cn/v1/conversation/retrieve?conversation_id=${conversationId}`,
       { headers: this.headers },
     );
-    // 清理用户的会话记录
-    await this.usersService.clearConversationId(userId);
+    return response.data.data;
   }
 
-  // 生成消息
-  async genMessage(userId: string, message: string) {
-    const conversationId = await this.usersService.getConversationId(userId);
+  // 删除会话
+  async deleteConversation(userId: string) {
+    // 清理用户的会话记录
+    await this.usersService.clearConversationIds(userId);
+  }
+
+  // 创建消息
+  async genMessage(conversationId: string, message: string) {
     const response = await axios.post(
       'https://api.coze.cn/v1/conversation/message/create',
       { role: 'user', content: message, content_type: 'text' },
@@ -63,20 +65,36 @@ export class CozeService {
     return response.data.data.id;
   }
 
-  // 生成对话
-  async genChat(userId: string) {
-    const conversationId = await this.usersService.getConversationId(userId);
+  // 查看消息列表
+  async getMessageList(conversationId: string) {
+    const response = await axios.get(
+      'https://api.coze.cn/v1/conversation/message/list',
+      { headers: this.headers, params: { conversation_id: conversationId } },
+    );
+    return response.data.data;
+  }
+
+  // 查看消息详情
+  async getMessageDetail(conversationId: string, messageId: string) {
+    const response = await axios.get(
+      `https://api.coze.cn/v1/conversation/message/retrieve?conversation_id=${conversationId}&message_id=${messageId}`,
+      { headers: this.headers },
+    );
+    return response.data.data;
+  }
+
+  // 发起对话
+  async genChat(conversationId: string, userId: string) {
     const response = await axios.post(
       'https://api.coze.cn/v3/chat',
       { bot_id: this.bot_id, user_id: userId },
       { headers: this.headers, params: { conversation_id: conversationId } },
     );
-    return response.data.data.id;
+    return response.data.data;
   }
 
   // 对话状态
-  async chatRetrieve(userId: string, chatId: string) {
-    const conversationId = await this.usersService.getConversationId(userId);
+  async chatRetrieve(conversationId: string, chatId: string) {
     const response = await axios.get('https://api.coze.cn/v3/chat/retrieve', {
       headers: this.headers,
       params: { conversation_id: conversationId, chat_id: chatId },
@@ -85,8 +103,7 @@ export class CozeService {
   }
 
   // 消息列表
-  async chatMessageList(userId: string, chatId: string) {
-    const conversationId = await this.usersService.getConversationId(userId);
+  async chatMessageList(conversationId: string, chatId: string) {
     const response = await axios.get(
       'https://api.coze.cn/v3/chat/message/list',
       {
