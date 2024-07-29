@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { User } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
@@ -10,23 +11,28 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, pass: string): Promise<any> {
+  async validateUser(
+    username: string,
+    pass: string,
+  ): Promise<Partial<User> | null> {
     const user = await this.usersService.findOne(username);
     if (user && (await bcrypt.compare(pass, user.password))) {
-      const { ...result } = user;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.userId };
+  async login(user: User) {
+    const payload = { username: user.username, sub: user.id };
     return {
+      id: user.id,
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  async register(user: any) {
+  async register(user: User) {
     const existingUser = await this.usersService.findOne(user.username);
     if (existingUser) {
       throw new Error('User already exists');
@@ -41,15 +47,17 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const newUser = { ...user, password: hashedPassword };
 
-    await this.usersService.create(newUser);
+    // 创建用户并获取新用户的 id
+    const userId = await this.usersService.create(newUser);
 
     // 生成 JWT 令牌
-    const payload = { username: newUser.username, sub: newUser.userId };
+    const payload = { username: newUser.username, sub: userId };
     const token = this.jwtService.sign(payload);
 
     return {
-      message: 'User registered successfully',
+      id: userId,
       token: token,
+      message: 'User registered successfully',
     };
   }
 }

@@ -16,7 +16,7 @@ import { CsvModule } from './modules/csv/csv.module';
 import { OthersModule } from './modules/others/others.module';
 import { WechatpayModule } from './modules/wechatpay/wechatpay.module';
 import { WenxinModule } from './modules/wenxin/wenxin.module';
-import { CozeModule } from './coze/coze.module';
+import { CozeModule } from './modules/coze/coze.module';
 // config
 import { ConfigModule } from '@nestjs/config';
 import { HtmlToWordModule } from './modules/html-to-word/html-to-word.module';

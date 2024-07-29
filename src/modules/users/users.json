@@ -1,6 +1,8 @@
 [
   {
-    "username": "user1",
-    "password": "$2b$10$vbMnTXafR6eA8SqqtuTukuUEkS7Aux2SMOGHhcFPnFzmgiD/lc.Xm"
+    "username": "user",
+    "password": "$2a$10$n4Vyq.Rvz4CP5RgNXBj.TuhYY2zqvessh7H/2XaVX9k.as6eI7lgO",
+    "id": "ae837598-3165-4a5d-beed-ab7c76bd78e8",
+    "conversationId": "7396893547477205032"
   }
 ]
