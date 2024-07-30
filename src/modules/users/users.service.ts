@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
+export interface IConversation {
+  id: string;
+  name: string;
+}
 
 export type User = {
   username: string;
   password: string;
   id: string;
-  conversationIds?: string[]; // 改为数组类型
+  conversations?: IConversation[];
 };
 
 @Injectable()
@@ -39,39 +45,44 @@ export class UsersService {
     return users.find((user) => user.id === userId);
   }
 
-  async create(user: User): Promise<void> {
+  async create(user: User): Promise<string> {
     const users = this.readUsersFromFile();
-    users.push(user);
+    const newUser = {
+      ...user,
+      id: uuidv4(),
+    };
+    users.push(newUser);
     this.writeUsersToFile(users);
+    return newUser.id;
   }
 
-  async updateConversationIds(
+  async updateConversations(
     userId: string,
-    conversationId: string,
+    conversation: { id: string; name: string },
   ): Promise<void> {
     const users = this.readUsersFromFile();
     const user = users.find((user) => user.id === userId);
     if (user) {
-      if (!user.conversationIds) {
-        user.conversationIds = [];
+      if (!user.conversations) {
+        user.conversations = [];
       }
-      if (!user.conversationIds.includes(conversationId)) {
-        user.conversationIds.push(conversationId);
+      if (!user.conversations.find((c) => c.id === conversation.id)) {
+        user.conversations.push(conversation);
         this.writeUsersToFile(users);
       }
     }
   }
 
-  async getConversationIds(userId: string): Promise<string[] | undefined> {
+  async getConversations(userId: string): Promise<IConversation[] | undefined> {
     const user = await this.findById(userId);
-    return user?.conversationIds || [];
+    return user?.conversations || [];
   }
 
   async clearConversationIds(userId: string): Promise<void> {
     const users = this.readUsersFromFile();
     const user = users.find((user) => user.id === userId);
     if (user) {
-      user.conversationIds = [];
+      user.conversations = [];
       this.writeUsersToFile(users);
     }
   }

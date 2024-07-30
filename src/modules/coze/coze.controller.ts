@@ -17,21 +17,34 @@ import { JwtAuthGuard } from '../auth/jwtAuth.guard';
 export class CozeController {
   constructor(private readonly cozeService: CozeService) {}
 
-  // 生成会话
-  @Post('create')
-  async createConversation(@Request() req) {
+  // 创建会话
+  @Post('genConversation')
+  async genConversation(@Request() req) {
     const userId = req.user.userId;
-    const conversationIds = await this.cozeService.getConversationIds(userId);
-    if (conversationIds.length) {
+    await this.cozeService.genConversation(userId);
+    const conversations = await this.cozeService.getConversations(userId);
+    return {
+      data: { conversations },
+      msg: '会话已获取成功',
+    };
+  }
+
+  // 获取会话
+  @Get('getConversations')
+  async getConversations(@Request() req) {
+    const userId = req.user.userId;
+    const conversations = await this.cozeService.getConversations(userId);
+    if (conversations.length) {
       return {
-        data: { conversationIds },
+        data: { conversations },
         msg: '会话已获取成功',
       };
     } else {
-      const conversationId = await this.cozeService.genConversation(userId);
+      await this.cozeService.genConversation(userId);
+      const conversations = await this.cozeService.getConversations(userId);
       return {
-        data: { conversationIds: [conversationId] },
-        msg: '新会话创建成功',
+        data: { conversations },
+        msg: '会话已获取成功',
       };
     }
   }
@@ -103,7 +116,7 @@ export class CozeController {
   // 查看聊天状态
   @Get('status')
   async getChatStatus(
-    @Query('conversationId') conversationId,
+    @Query('conversationId') conversationId: string,
     @Query('chatId') chatId: string,
   ) {
     const status = await this.cozeService.chatRetrieve(conversationId, chatId);
@@ -116,11 +129,11 @@ export class CozeController {
     @Query('conversationId') conversationId: string,
     @Query('chatId') chatId: string,
   ) {
+    console.log('conversationId', conversationId);
     const messages = await this.cozeService.chatMessageList(
       conversationId,
       chatId,
     );
-    console.log('messages', messages);
     return { data: messages, msg: '聊天消息获取成功' };
   }
 
@@ -132,8 +145,13 @@ export class CozeController {
     @Body('message') message: string,
   ) {
     const userId = req.user.userId;
-    const chat_id = await this.cozeService.genMessage(conversationId, message);
+    const message_id = await this.cozeService.genMessage(
+      conversationId,
+      message,
+    );
+    console.log('message_id', message_id);
     const response = await this.cozeService.genChat(conversationId, userId);
-    return { data: { ...response, chat_id }, msg: '聊天消息发送成功' };
+    console.log('response', response);
+    return { data: { ...response, message_id }, msg: '聊天消息发送成功' };
   }
 }

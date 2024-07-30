@@ -23,25 +23,27 @@ export class CozeService {
   constructor(private readonly usersService: UsersService) {}
 
   // 获取用户会话
-  async getConversationIds(userId: string) {
-    return this.usersService.getConversationIds(userId);
+  async getConversations(userId: string) {
+    return this.usersService.getConversations(userId);
   }
 
   // 创建会话
-  async genConversation(userId: string) {
+  async genConversation(userId: string, name = '未命名会话') {
     const response = await axios.post(
       'https://api.coze.cn/v1/conversation/create',
       {},
       { headers: this.headers },
     );
     const conversationId = response.data.data.id;
-    await this.usersService.updateConversationIds(userId, conversationId);
+    await this.usersService.updateConversations(userId, {
+      id: conversationId,
+      name,
+    });
     return conversationId;
   }
 
   // 查看会话信息
   async getConversationInfo(conversationId: string) {
-    console.log('getConversationInfo', conversationId);
     const response = await axios.get(
       `https://api.coze.cn/v1/conversation/retrieve?conversation_id=${conversationId}`,
       { headers: this.headers },

@@ -1,12 +1,17 @@
 [
   {
-    "username": "user",
-    "password": "$2a$10$n4Vyq.Rvz4CP5RgNXBj.TuhYY2zqvessh7H/2XaVX9k.as6eI7lgO",
-    "id": "ae837598-3165-4a5d-beed-ab7c76bd78e8",
-    "conversationIds": [
-      "7396937118502617151",
-      "7396937041935908915",
-      "7396937259238342667"
+    "username": "user1",
+    "password": "$2a$10$4NFNRJYpzmTJZsERCCBGw.isdBcrubnOc76.8q7/1OIm80rHPiy4.",
+    "id": "fdb3c4f6-2e0e-44ef-967c-c843790fc03a",
+    "conversations": [
+      {
+        "id": "7397352193667596351",
+        "name": "未命名会话"
+      },
+      {
+        "id": "7397354400202833932",
+        "name": "未命名会话"
+      }
     ]
   }
 ]
