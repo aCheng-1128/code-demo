@@ -13,7 +13,7 @@ export class WsGateway implements OnModuleInit {
 
   onModuleInit() {
     this.server = new Server({
-      port: 3001,
+      port: 3002,
       path: '/openai',
     });
 
@@ -48,7 +48,7 @@ export class WsGateway implements OnModuleInit {
     } catch (error) {
       console.error('Error while getting response from OpenAI:', error);
     } finally {
-      this.clients.forEach((client) => {
+      this.clients.forEach((client) => { 
         if (client.readyState === WebSocket.OPEN) {
           client.send(response);
         }

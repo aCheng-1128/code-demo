@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { CozeService } from './coze.service';
 import { JwtAuthGuard } from '../auth/jwtAuth.guard';
+import * as _ from 'lodash';
 
 @Controller('coze')
 @UseGuards(JwtAuthGuard)
@@ -24,7 +25,7 @@ export class CozeController {
     await this.cozeService.genConversation(userId);
     const conversations = await this.cozeService.getConversations(userId);
     return {
-      data: { conversations },
+      data: conversations,
       msg: '会话已获取成功',
     };
   }
@@ -36,14 +37,14 @@ export class CozeController {
     const conversations = await this.cozeService.getConversations(userId);
     if (conversations.length) {
       return {
-        data: { conversations },
+        data: conversations,
         msg: '会话已获取成功',
       };
     } else {
       await this.cozeService.genConversation(userId);
       const conversations = await this.cozeService.getConversations(userId);
       return {
-        data: { conversations },
+        data: conversations,
         msg: '会话已获取成功',
       };
     }
@@ -56,7 +57,7 @@ export class CozeController {
       conversationId,
     );
     return {
-      data: { conversationInfo },
+      data: conversationInfo,
       msg: '会话信息获取成功',
     };
   }
@@ -86,7 +87,21 @@ export class CozeController {
   @Get('messageList')
   async getMessageList(@Query('conversationId') conversationId: string) {
     const messages = await this.cozeService.getMessageList(conversationId);
-    return { data: { messages }, msg: '消息列表获取成功' };
+    return {
+      data: messages.map((msg) =>
+        _.pick(msg, [
+          'id',
+          'conversation_id',
+          'content',
+          'role',
+          'type',
+          'meta_data',
+          'created_at',
+          'updated_at',
+        ]),
+      ),
+      msg: '消息列表获取成功',
+    };
   }
 
   // 查看消息详情
@@ -99,7 +114,21 @@ export class CozeController {
       conversationId,
       messageId,
     );
-    return { data: { message }, msg: '消息详情获取成功' };
+    return {
+      data: message.map((msg) =>
+        _.pick(msg, [
+          'id',
+          'conversation_id',
+          'content',
+          'role',
+          'type',
+          'meta_data',
+          'created_at',
+          'updated_at',
+        ]),
+      ),
+      msg: '消息详情获取成功',
+    };
   }
 
   // 创建聊天
@@ -134,7 +163,12 @@ export class CozeController {
       conversationId,
       chatId,
     );
-    return { data: messages, msg: '聊天消息获取成功' };
+    return {
+      data: messages.map((msg) =>
+        _.pick(msg, ['id', 'conversation_id', 'content', 'role', 'type']),
+      ),
+      msg: '聊天消息获取成功',
+    };
   }
 
   // 发送聊天消息
@@ -145,13 +179,11 @@ export class CozeController {
     @Body('message') message: string,
   ) {
     const userId = req.user.userId;
-    const message_id = await this.cozeService.genMessage(
-      conversationId,
-      message,
-    );
-    console.log('message_id', message_id);
+    await this.cozeService.genMessage(conversationId, message);
     const response = await this.cozeService.genChat(conversationId, userId);
-    console.log('response', response);
-    return { data: { ...response, message_id }, msg: '聊天消息发送成功' };
+    return {
+      data: { chat_id: response.id },
+      msg: '聊天消息发送成功',
+    };
   }
 }
