@@ -366,7 +366,7 @@ export class OthersController {
   }
 
   @Get('getResumeDoc')
-  async getResumeDoc(@Query('url') url: string, @Res() res: Response) {
+  async getResumeDoc(@Body('url') url: string, @Res() res: Response) {
     // http://localhost:3366/others/getResumeDoc?url=https://zcmima.cn/%23/resume/edit?id=MDAwMDAwMDAwMIO5x9-ydLua%26tzUrl=tem0005%26language=cn%26platform=pluginxfyun%26from=xfspark%26uuid=184abab5-9bd2-42a4-bda4-dfb2084fd69a#/resume/edit?id=MDAwMDAwMDAwMIO5x9-ydLua&tzUrl=tem0005&language=cn&platform=pluginxfyun&from=xfspark&uuid=184abab5-9bd2-42a4-bda4-dfb2084fd69a
     if (!url) {
       throw new HttpException(
@@ -425,20 +425,10 @@ export class OthersController {
         </html>
       `;
 
-      // 设置页面内容为 HTML，并生成 PDF
-      await page.setContent(resumeContentHtml, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        timeout: 60000, // 设置生成 PDF 的超时时间
-      });
-
-      // 返回 PDF 文件
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="resume.pdf"',
-      });
-      res.send(pdfBuffer);
+      return {
+        html: resumeContent,
+        css: cssStyle,
+      };
     } catch (error) {
       console.error('Error generating PDF:', error);
       throw new HttpException(

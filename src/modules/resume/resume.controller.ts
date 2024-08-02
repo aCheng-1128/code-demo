@@ -13,6 +13,23 @@ import { ResumeService } from './resume.service';
 export class ResumeController {
   constructor(private readonly resumeService: ResumeService) {}
 
+  @Post('getResumeHtml')
+  async getResumeHtml(@Body('url') url: string, @Res() res: Response) {
+    try {
+      const resumeHtml = await this.resumeService.getResumeHtml(url);
+      res.send(resumeHtml);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error getting HTML:', error);
+      throw new HttpException(
+        'Failed to get HTML',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('getResumePdf')
   async getResumePdf(@Body('url') url: string, @Res() res: Response) {
     try {
